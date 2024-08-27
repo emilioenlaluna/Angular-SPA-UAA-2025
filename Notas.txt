@@ -1,3 +1,15 @@
 dotnet new sln
 
 dotnet new webapi --use-controllers -o TodoApi
+
+cd .\API\
+
+dotnet build
+
+dotnet run
+
+
+localhost:xxxx/WeatherForecast
+localhost:xxxx/Swagger
+
+
