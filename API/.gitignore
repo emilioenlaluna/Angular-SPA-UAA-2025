@@ -1,0 +1,137 @@
+# Ignore Visual Studio temporary files, build results, and
+# build directories
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Pp][Pp]_DATA/
+app_data/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Auto-generated files by Visual Studio
+*.sln.docstates
+_Resharper*
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Pp][Pp]_DATA/
+app_data/
+
+# Auto-generated UI files
+*_i.c
+*_p.c
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (Mono Auto Generated)
+mono_crash.*
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Linux trash folder which might appear on a mounted volume
+.Trash-*
+
+# node.js dependencies
+node_modules/
+
+# VS Code files
+.vscode/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Entity Framework
+*.jfm
+
+# ASP.NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET 5
+project.json
+project.lock.json
+artifacts/
+*.lock.json
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+
+# Microsoft Azure
+# Ignore default credential file
+AzureFunctionsSecret/
+
+# Mac trash folder which might appear on a mounted volume
+.DS_Store
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+
+
+# From .NET Core 3.0 you can use the command: `dotnet new gitignore` to generate a customizable .gitignore file
+
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+
+# Visual Studio Code
+.vscode
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio 2015
+.vs/

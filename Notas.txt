@@ -13,3 +13,4 @@ localhost:xxxx/WeatherForecast
 localhost:xxxx/Swagger
 
 
+dotnet watch --no-hot-reload
