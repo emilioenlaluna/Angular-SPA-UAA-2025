@@ -1,0 +1,8 @@
+<h1>{{ title }}</h1>
+
+<ul>
+    <!-- Correct usage of *ngFor in Angular -->
+    <li *ngFor="let user of users; trackBy: trackByUserId">
+        {{ user.id }} - {{ user.userName }}
+    </li>
+</ul>
