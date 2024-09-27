@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AccountService } from 'src/app/services/account.service';
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
   styleUrls: ['./nav.component.scss'],
-
+  
 })
 export class NavComponent {
   private accountService = inject(AccountService);
@@ -22,6 +23,10 @@ export class NavComponent {
       error: (error) => {
         console.log(error);
       }
-    })
+    });
+  }
+
+  logout(): void {
+    this.loggedIn = false;
   }
 }
