@@ -11,6 +11,10 @@ import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RegisterComponent } from './components/register/register.component';
 import { HomeComponent } from './components/home/home.component';
+import { MemberListComponent } from './components/member-list/member-list.component';
+import { MemberDetailComponent } from './components/member-detail/member-detail.component';
+import { ListsComponent } from './components/lists/lists.component';
+import { MessagesComponent } from './components/messages/messages.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +22,11 @@ import { HomeComponent } from './components/home/home.component';
     UsersComponent,
     NavComponent,
     RegisterComponent,
-    HomeComponent
+    HomeComponent,
+    MemberListComponent,
+    MemberDetailComponent,
+    ListsComponent,
+    MessagesComponent
   ],
   imports: [
     BrowserModule,
