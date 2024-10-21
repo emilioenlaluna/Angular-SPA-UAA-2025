@@ -1,40 +1,56 @@
 namespace API.Controllers;
 using API.Data;
-using API.Entities;
+using API.DataEntities;
+using API.DTOs;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 [Authorize]
 public class UsersController : BaseApiController
 {
-    private readonly DataContext _context;
+    private readonly IUserRepository _repository;
+    private readonly IMapper _mapper;
 
-    public UsersController(DataContext context)
+    public UsersController(IUserRepository repository, IMapper mapper)
     {
-        _context = context;
+        _repository = repository;
+        _mapper = mapper;
     }
 
-    [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AppUser>>> GetUsersAsync()
+    public async Task<ActionResult<IEnumerable<MemberResponse>>> GetAllAsync()
     {
-        var users = await _context.Users.ToListAsync();
+        var users = await _repository.GetAllAsync();
 
-        return users;
+        var response = _mapper.Map<IEnumerable<MemberResponse>>(users);
+
+        return Ok(response);
     }
 
-    [Authorize]
     [HttpGet("{id:int}")] // api/users/2
-    public async Task<ActionResult<AppUser>> GetUsersByIdAsync(int id)
+    public async Task<ActionResult<MemberResponse>> GetByIdAsync(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _repository.GetByIdAsync(id);
 
-        if (user == null) return NotFound();
+        if (user == null)
+        {
+            return NotFound();
+        }
 
-        return user;
+        return _mapper.Map<MemberResponse>(user);
     }
 
-    [HttpGet("{name}")] // api/users/Calamardo
-    public ActionResult<string> Ready(string name) => $"Hi {name}";
+    [HttpGet("{username}")] // api/users/Calamardo
+    public async Task<ActionResult<MemberResponse>> GetByUsernameAsync(string username)
+    {
+        var user = await _repository.GetByUsernameAsync(username);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return _mapper.Map<MemberResponse>(user);
+    }
 }
