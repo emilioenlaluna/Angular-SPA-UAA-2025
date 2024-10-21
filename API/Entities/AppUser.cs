@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace API.Entities;
 
 public class AppUser
