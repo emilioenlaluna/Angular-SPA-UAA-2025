@@ -1,8 +1,8 @@
 using System.IO;
 using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
 
-[ExcludeFromCodeCoverage]
+
+
 namespace API.Services
 {
     public class FileReader : IFileReader
