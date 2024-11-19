@@ -41,7 +41,7 @@ namespace API.UnitTests.Tests
         #region GetAllAsync Tests
 
         [Fact]
-        public async Task GetAllAsync_ReturnsOkResult_WithListOfMembers()
+        public async Task GetAllAsync_ShouldReturnOkResultWithListOfMembers()
         {
             // Arrange
             var members = new List<MemberResponse>
@@ -63,7 +63,7 @@ namespace API.UnitTests.Tests
         }
 
         [Fact]
-        public async Task GetAllAsync_ReturnsOkResult_WithEmptyList()
+        public async Task GetAllAsync_ShouldReturnOkResultWithEmptyList()
         {
             // Arrange
             var members = new List<MemberResponse>();
@@ -85,7 +85,7 @@ namespace API.UnitTests.Tests
         {
             // Arrange
             _userRepositoryMock.Setup(repo => repo.GetMembersAsync())
-                               .ThrowsAsync(new Exception("Database failure"));
+                               .ThrowsAsync(new InvalidOperationException("Database failure"));
 
             // Act
             var result = await _controller.GetAllAsync();
@@ -144,7 +144,7 @@ namespace API.UnitTests.Tests
             var username = "User1";
 
             _userRepositoryMock.Setup(repo => repo.GetMemberAsync(username))
-                               .ThrowsAsync(new Exception("Database failure"));
+                               .ThrowsAsync(new InvalidOperationException("Database failure"));
 
             // Act
             var result = await _controller.GetByUsernameAsync(username);

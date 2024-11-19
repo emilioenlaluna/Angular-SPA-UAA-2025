@@ -1,4 +1,3 @@
-// Archivo: API.UnitTests/Controllers/AccountControllerTests.cs
 using System;
 using System.Threading.Tasks;
 using API.Controllers;
@@ -40,6 +39,7 @@ namespace API.UnitTests.Controllers
         {
             _context.Database.EnsureDeleted();
             _context.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         #region RegisterAsync Tests
@@ -62,6 +62,7 @@ namespace API.UnitTests.Controllers
             var result = await _controller.RegisterAsync(registerRequest);
 
             // Assert
+            result.Result.Should().BeOfType<OkObjectResult>();
             var okResult = result.Result as OkObjectResult;
             okResult.Should().NotBeNull();
             okResult.StatusCode.Should().Be(200);
@@ -87,8 +88,12 @@ namespace API.UnitTests.Controllers
             var existingUser = new AppUser
             {
                 UserName = "usuarioExistente",
-                PasswordHash = new byte[] { },
-                PasswordSalt = new byte[] { }
+                PasswordHash = Array.Empty<byte>(),
+                PasswordSalt = Array.Empty<byte>(),
+                KnownAs = "NombreConocido",
+                Gender = "Genero",
+                City = "Ciudad",
+                Country = "Pais"
             };
             _context.Users.Add(existingUser);
             await _context.SaveChangesAsync();
@@ -117,11 +122,18 @@ namespace API.UnitTests.Controllers
         public async Task LoginAsync_ShouldReturnUserResponse_WhenCredentialsAreValid()
         {
             // Arrange
+            var password = "Password123!";
+            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
             var user = new AppUser
             {
                 UserName = "usuarioValido",
-                PasswordHash = ComputeHash("Password123!"),
-                PasswordSalt = ComputeSalt()
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
+                KnownAs = "NombreConocido",
+                Gender = "Genero",
+                City = "Ciudad",
+                Country = "Pais"
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -140,6 +152,7 @@ namespace API.UnitTests.Controllers
             var result = await _controller.LoginAsync(loginRequest);
 
             // Assert
+            result.Result.Should().BeOfType<OkObjectResult>();
             var okResult = result.Result as OkObjectResult;
             okResult.Should().NotBeNull();
             okResult.StatusCode.Should().Be(200);
@@ -174,11 +187,18 @@ namespace API.UnitTests.Controllers
         public async Task LoginAsync_ShouldReturnUnauthorized_WhenPasswordIsInvalid()
         {
             // Arrange
+            var password = "Password123!";
+            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
             var user = new AppUser
             {
                 UserName = "usuarioValido",
-                PasswordHash = ComputeHash("Password123!"),
-                PasswordSalt = ComputeSalt()
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
+                KnownAs = "NombreConocido",
+                Gender = "Genero",
+                City = "Ciudad",
+                Country = "Pais"
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -203,16 +223,11 @@ namespace API.UnitTests.Controllers
 
         #region Helper Methods
 
-        private byte[] ComputeHash(string password)
+        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using var hmac = new System.Security.Cryptography.HMACSHA512();
-            return hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-        }
-
-        private byte[] ComputeSalt()
-        {
-            using var hmac = new System.Security.Cryptography.HMACSHA512();
-            return hmac.Key;
+            passwordSalt = hmac.Key;
+            passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
         }
 
         #endregion
