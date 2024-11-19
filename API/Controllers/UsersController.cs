@@ -1,44 +1,111 @@
-using API.Data;
-using API.Entities;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
 namespace API.Controllers;
 
+using System.Security.Claims;
+using API.Data;
+using API.DTOs;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+
+[ApiController]
+[Route("api/[controller]")]
 [Authorize]
 public class UsersController : BaseApiController
 {
-    private readonly DataContext _context;
+    private readonly IUserRepository _repository;
+    private readonly IMapper _mapper;
 
-    public UsersController(DataContext context)
+    public UsersController(IUserRepository repository, IMapper mapper)
     {
-        _context = context;
+        _repository = repository;
+        _mapper = mapper;
     }
 
-    [AllowAnonymous]
+    /// <summary>
+    /// Obtiene una lista de todos los miembros.
+    /// </summary>
+    /// <returns>Una lista de objetos MemberResponse.</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AppUser>>> GetUsersAsync()
+    public async Task<ActionResult<IEnumerable<MemberResponse>>> GetAllAsync()
     {
-        var users = await _context.Users.ToListAsync();
-
-        return users;
+        try
+        {
+            var members = await _repository.GetMembersAsync();
+            return Ok(members);
+        }
+        catch (Exception ex)
+        {
+            // Aquí puedes registrar la excepción si tienes un servicio de logging
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+        }
     }
 
-    [Authorize]
-    [HttpGet("{id:int}")] // api/users/2
-    public async Task<ActionResult<AppUser>> GetUsersByIdAsync(int id)
+    /// <summary>
+    /// Obtiene la información de un miembro específico por su nombre de usuario.
+    /// </summary>
+    /// <param name="username">El nombre de usuario del miembro.</param>
+    /// <returns>Un objeto MemberResponse si se encuentra, de lo contrario NotFound.</returns>
+    [HttpGet("{username}")] // Ejemplo de ruta: api/users/Calamardo
+    public async Task<ActionResult<MemberResponse>> GetByUsernameAsync(string username)
     {
-        var user = await _context.Users.FindAsync(id);
+        try
+        {
+            var member = await _repository.GetMemberAsync(username);
 
-        if (user == null) return NotFound();
+            if (member == null)
+            {
+                return NotFound();
+            }
 
-        return user;
+            return Ok(member);
+        }
+        catch (Exception ex)
+        {
+            // Aquí puedes registrar la excepción si tienes un servicio de logging
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+        }
     }
-    
-    [HttpGet("{name}")] // api/users/Calamardo
-    public ActionResult<string> Ready(string name)
+
+    /// <summary>
+    /// Actualiza la información del usuario autenticado.
+    /// </summary>
+    /// <param name="request">Los datos de actualización del miembro.</param>
+    /// <returns>NoContent si la actualización es exitosa, de lo contrario BadRequest.</returns>
+    [HttpPut]
+    public async Task<ActionResult> UpdateUser([FromBody] MemberUpdateRequest request)
     {
-        return $"Hi {name}";
+        // Verificar si el modelo es inválido
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(username))
+        {
+            return BadRequest("No username found in token");
+        }
+
+        var user = await _repository.GetByUsernameAsync(username);
+
+        if (user == null)
+        {
+            return BadRequest("Could not find user");
+        }
+
+        _mapper.Map(request, user);
+        _repository.Update(user);
+
+        if (await _repository.SaveAllAsync())
+        {
+            return NoContent();
+        }
+
+        return BadRequest("Update user failed!");
     }
 }
