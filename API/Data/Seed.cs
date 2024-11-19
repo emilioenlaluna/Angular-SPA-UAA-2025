@@ -1,40 +1,61 @@
-namespace API.Data;
-
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using API.DataEntities;
+using API.Services;
 using Microsoft.EntityFrameworkCore;
 
-public class Seed
+namespace API.Data
 {
-    public static async Task SeedUsersAsync(DataContext context)
+    public class Seed
     {
-        if (await context.Users.AnyAsync())
+        // Sobrecarga sin parámetro IFileReader
+        public static async Task SeedUsersAsync(DataContext context)
         {
-            return;
+            await SeedUsersAsync(context, new FileReader());
         }
 
-        var userData = await File.ReadAllTextAsync("Data/UserSeedData.json");
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var users = JsonSerializer.Deserialize<List<AppUser>>(userData, options);
-
-        if (users == null)
+        // Método original con IFileReader
+        public static async Task SeedUsersAsync(DataContext context, IFileReader fileReader)
         {
-            return;
+            if (await context.Users.AnyAsync())
+            {
+                return;
+            }
+
+            var userData = await fileReader.ReadAllTextAsync("Data/UserSeedData.json");
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            List<AppUser> users;
+
+            try
+            {
+                users = JsonSerializer.Deserialize<List<AppUser>>(userData, options);
+            }
+            catch (JsonException)
+            {
+                // Manejar el error de deserialización
+                return;
+            }
+
+            if (users == null)
+            {
+                return;
+            }
+
+            foreach (var user in users)
+            {
+                using var hmac = new HMACSHA512();
+
+                user.UserName = user.UserName.ToLowerInvariant();
+                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
+                user.PasswordSalt = hmac.Key;
+
+                context.Users.Add(user);
+            }
+
+            await context.SaveChangesAsync();
         }
-
-        foreach (var user in users)
-        {
-            using var hmac = new HMACSHA512();
-
-            user.UserName = user.UserName.ToLowerInvariant();
-            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
-            user.PasswordSalt = hmac.Key;
-
-            context.Users.Add(user);
-        }
-
-        await context.SaveChangesAsync();
     }
 }

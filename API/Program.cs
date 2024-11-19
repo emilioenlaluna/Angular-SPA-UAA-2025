@@ -1,13 +1,17 @@
 namespace API;
 
-using API.Data;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using API.Data;
+using API.Services; 
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
 
 public class Program
 {
@@ -21,15 +25,15 @@ public class Program
         {
             var context = services.GetRequiredService<DataContext>();
             // var userManager = services.GetRequiredService<UserManager<AppUser>>();
-            // var roleManger = services.GetRequiredService<RoleManager<AppRole>>();
+            // var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
 
             await context.Database.MigrateAsync();
-            await Seed.SeedUsersAsync(context); // (userManager, roleManger);
+            await Seed.SeedUsersAsync(context, new FileReader()); // Pasa la instancia de FileReader
         }
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error has ocurred during migration/seeding");
+            logger.LogError(ex, "An error has occurred during migration/seeding");
         }
 
         await host.RunAsync();
