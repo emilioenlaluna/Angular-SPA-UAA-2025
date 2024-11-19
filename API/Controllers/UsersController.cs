@@ -6,7 +6,13 @@ using API.DTOs;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
+[ApiController]
+[Route("api/[controller]")]
 [Authorize]
 public class UsersController : BaseApiController
 {
@@ -19,32 +25,68 @@ public class UsersController : BaseApiController
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Obtiene una lista de todos los miembros.
+    /// </summary>
+    /// <returns>Una lista de objetos MemberResponse.</returns>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MemberResponse>>> GetAllAsync()
     {
-        var members = await _repository.GetMembersAsync();
-        return Ok(members);
+        try
+        {
+            var members = await _repository.GetMembersAsync();
+            return Ok(members);
+        }
+        catch (Exception ex)
+        {
+            // Aquí puedes registrar la excepción si tienes un servicio de logging
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+        }
     }
 
-    [HttpGet("{username}")] // api/users/Calamardo
+    /// <summary>
+    /// Obtiene la información de un miembro específico por su nombre de usuario.
+    /// </summary>
+    /// <param name="username">El nombre de usuario del miembro.</param>
+    /// <returns>Un objeto MemberResponse si se encuentra, de lo contrario NotFound.</returns>
+    [HttpGet("{username}")] // Ejemplo de ruta: api/users/Calamardo
     public async Task<ActionResult<MemberResponse>> GetByUsernameAsync(string username)
     {
-        var member = await _repository.GetMemberAsync(username);
-
-        if (member == null)
+        try
         {
-            return NotFound();
-        }
+            var member = await _repository.GetMemberAsync(username);
 
-        return member;
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(member);
+        }
+        catch (Exception ex)
+        {
+            // Aquí puedes registrar la excepción si tienes un servicio de logging
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+        }
     }
 
+    /// <summary>
+    /// Actualiza la información del usuario autenticado.
+    /// </summary>
+    /// <param name="request">Los datos de actualización del miembro.</param>
+    /// <returns>NoContent si la actualización es exitosa, de lo contrario BadRequest.</returns>
     [HttpPut]
-    public async Task<ActionResult> UpdateUser(MemberUpdateRequest request)
+    public async Task<ActionResult> UpdateUser([FromBody] MemberUpdateRequest request)
     {
+        // Verificar si el modelo es inválido
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (username == null)
+        if (string.IsNullOrEmpty(username))
         {
             return BadRequest("No username found in token");
         }
