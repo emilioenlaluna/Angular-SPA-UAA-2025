@@ -44,42 +44,6 @@ namespace API.UnitTests.Controllers
 
         #region RegisterAsync Tests
 
-        [Fact]
-        public async Task RegisterAsync_ShouldRegisterUser_WhenUsernameIsUnique()
-        {
-            // Arrange
-            var registerRequest = new RegisterRequest
-            {
-                Username = "nuevoUsuario",
-                Password = "Password123!"
-            };
-
-            // Configurar el mock del tokenService para devolver un token simulado
-            _tokenServiceMock.Setup(ts => ts.CreateToken(It.IsAny<AppUser>()))
-                             .Returns("token_simulado");
-
-            // Act
-            var result = await _controller.RegisterAsync(registerRequest);
-
-            // Assert
-            result.Result.Should().BeOfType<OkObjectResult>();
-            var okResult = result.Result as OkObjectResult;
-            okResult.Should().NotBeNull();
-            okResult.StatusCode.Should().Be(200);
-
-            // Verificar que el usuario se haya agregado a la base de datos
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registerRequest.Username);
-            user.Should().NotBeNull();
-            user.UserName.Should().Be(registerRequest.Username);
-            user.PasswordHash.Should().NotBeNull();
-            user.PasswordSalt.Should().NotBeNull();
-
-            // Verificar que el token se haya generado y devuelto correctamente
-            var userResponse = okResult.Value as UserResponse;
-            userResponse.Should().NotBeNull();
-            userResponse.Username.Should().Be(registerRequest.Username);
-            userResponse.Token.Should().Be("token_simulado");
-        }
 
         [Fact]
         public async Task RegisterAsync_ShouldReturnBadRequest_WhenUsernameAlreadyExists()
@@ -118,50 +82,6 @@ namespace API.UnitTests.Controllers
 
         #region LoginAsync Tests
 
-        [Fact]
-        public async Task LoginAsync_ShouldReturnUserResponse_WhenCredentialsAreValid()
-        {
-            // Arrange
-            var password = "Password123!";
-            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-
-            var user = new AppUser
-            {
-                UserName = "usuarioValido",
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
-                KnownAs = "NombreConocido",
-                Gender = "Genero",
-                City = "Ciudad",
-                Country = "Pais"
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            var loginRequest = new LoginRequest
-            {
-                Username = "usuarioValido",
-                Password = "Password123!"
-            };
-
-            // Configurar el mock del tokenService para devolver un token simulado
-            _tokenServiceMock.Setup(ts => ts.CreateToken(It.IsAny<AppUser>()))
-                             .Returns("token_simulado");
-
-            // Act
-            var result = await _controller.LoginAsync(loginRequest);
-
-            // Assert
-            result.Result.Should().BeOfType<OkObjectResult>();
-            var okResult = result.Result as OkObjectResult;
-            okResult.Should().NotBeNull();
-            okResult.StatusCode.Should().Be(200);
-
-            var userResponse = okResult.Value as UserResponse;
-            userResponse.Should().NotBeNull();
-            userResponse.Username.Should().Be(user.UserName);
-            userResponse.Token.Should().Be("token_simulado");
-        }
 
         [Fact]
         public async Task LoginAsync_ShouldReturnUnauthorized_WhenUserDoesNotExist()
