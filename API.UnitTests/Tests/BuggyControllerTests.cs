@@ -10,11 +10,11 @@ using Newtonsoft.Json.Linq;
 
 public class BuggyControllerTests
 {
-    private string apiRoute = "api/buggy";
+    private readonly string apiRoute = "api/buggy";
     private readonly HttpClient _client;
     private HttpResponseMessage httpResponse;
     private string requestUrl;
-    private string loginObjetct;
+    private string loginObject;
     private HttpContent httpContent;
 
     public BuggyControllerTests()
@@ -22,20 +22,20 @@ public class BuggyControllerTests
         _client = TestHelper.Instance.Client;
     }
 
-    [Theory]
-    [InlineData("OK", "arenita", "123456")]
-    public async Task GetSecretShouldOK(string statusCode, string username, string password)
+    [Fact]
+    public async Task GetSecretShouldOK()
     {
         // Arrange
+        var expectedStatusCode = "OK";
         requestUrl = "api/account/login";
         var loginRequest = new LoginRequest
         {
-            Username = username,
-            Password = password
+            Username = "arenita",
+            Password = "123456"
         };
 
-        loginObjetct = GetLoginObject(loginRequest);
-        httpContent = GetHttpContent(loginObjetct);
+        loginObject = GetLoginObject(loginRequest);
+        httpContent = GetHttpContent(loginObject);
 
         httpResponse = await _client.PostAsync(requestUrl, httpContent);
         var reponse = await httpResponse.Content.ReadAsStringAsync();
@@ -49,8 +49,8 @@ public class BuggyControllerTests
         httpResponse = await _client.GetAsync(requestUrl);
 
         // Assert
-        Assert.Equal(Enum.Parse<HttpStatusCode>(statusCode, true), httpResponse.StatusCode);
-        Assert.Equal(statusCode, httpResponse.StatusCode.ToString());
+        Assert.Equal(Enum.Parse<HttpStatusCode>(expectedStatusCode, true), httpResponse.StatusCode);
+        Assert.Equal(expectedStatusCode, httpResponse.StatusCode.ToString());
     }
 
     [Theory]
@@ -111,10 +111,8 @@ public class BuggyControllerTests
         return entityObject.ToString();
     }
 
-    private static StringContent GetHttpContent(string objectToCode)
-    {
-        return new StringContent(objectToCode, Encoding.UTF8, "application/json");
-    }
+    private static StringContent GetHttpContent(string objectToCode) =>
+        new(objectToCode, Encoding.UTF8, "application/json");
 
     #endregion
 }
