@@ -2,41 +2,63 @@ namespace API.Data;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using API.DataEntities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 [ExcludeFromCodeCoverage]
 public class Seed
 {
-    public static async Task SeedUsersAsync(DataContext context)
+    public static async Task SeedUsersAsync(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
     {
-        if (await context.Users.AnyAsync())
+        if (await userManager.Users.AnyAsync())
         {
             return;
         }
 
         var userData = await File.ReadAllTextAsync("Data/UserSeedData.json");
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var users = JsonSerializer.Deserialize<List<AppUser>>(userData, options);
+        var users = JsonSerializer.Deserialize<List<AppUser>>(userData, ReadOptions);
 
         if (users == null)
         {
             return;
         }
 
-        foreach (var user in users)
+        var roles = new List<AppRole>
         {
-            using var hmac = new HMACSHA512();
+            new() { Name = "Admin" },
+            new() { Name = "Member" },
+            new() { Name = "Moderator" }
+        };
 
-            user.UserName = user.UserName.ToLowerInvariant();
-            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("123456"));
-            user.PasswordSalt = hmac.Key;
-
-            context.Users.Add(user);
+        foreach (var role in roles)
+        {
+            await roleManager.CreateAsync(role);
         }
 
-        await context.SaveChangesAsync();
+        var admin = new AppUser
+        {
+            UserName = "admin",
+            KnownAs = "Admin",
+            Gender = string.Empty,
+            City = string.Empty,
+            Country = string.Empty
+        };
+
+        await userManager.CreateAsync(admin, "Pa$$w0rd");
+        await userManager.AddToRolesAsync(admin, ["Admin", "Moderator"]);
+
+        foreach (var user in users)
+        {
+            user.UserName = user.UserName!.ToLowerInvariant();
+            await userManager.CreateAsync(user, "Pa$$w0rd");
+            await userManager.AddToRoleAsync(user, "Member");
+        }
     }
+
+    private static readonly JsonSerializerOptions ReadOptions = new()
+    {
+        AllowTrailingCommas = true
+    };
 }

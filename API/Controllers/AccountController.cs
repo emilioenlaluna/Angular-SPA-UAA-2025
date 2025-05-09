@@ -1,16 +1,15 @@
 namespace API.Controllers;
-using System.Security.Cryptography;
-using System.Text;
-using API.Data;
+
 using API.DTOs;
 using API.DataEntities;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 
 public class AccountController(
-    DataContext context,
+    UserManager<AppUser> userManager,
     ITokenService tokenService,
     IMapper mapper) : BaseApiController
 {
@@ -22,19 +21,19 @@ public class AccountController(
             return BadRequest("Username already in use");
         }
 
-        using var hmac = new HMACSHA512();
         var user = mapper.Map<AppUser>(request);
-        user.UserName = request.Username;
-        user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(request.Password));
-        user.PasswordSalt = hmac.Key;
+        user.UserName = request.Username.ToLowerInvariant();
+        var result = await userManager.CreateAsync(user, request.Password);
 
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
 
         return new UserResponse
         {
             Username = user.UserName,
-            Token = tokenService.CreateToken(user),
+            Token = await tokenService.CreateToken(user),
             KnownAs = user.KnownAs,
             Gender = user.Gender
         };
@@ -43,36 +42,32 @@ public class AccountController(
     [HttpPost("login")]
     public async Task<ActionResult<UserResponse>> LoginAsync(LoginRequest request)
     {
-        var user = await context.Users
+        var user = await userManager.Users
             .Include(x => x.Photos)
-            .FirstOrDefaultAsync(x => x.UserName.ToLower() == request.Username.ToLower());
+            .FirstOrDefaultAsync(x => x.NormalizedUserName == request.Username.ToUpperInvariant());
 
-        if (user == null)
+        if (user == null || user.UserName == null)
         {
             return Unauthorized("Invalid username or password");
         }
 
-        using var hmac = new HMACSHA512(user.PasswordSalt);
-        var computeHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(request.Password));
+        var result = await userManager.CheckPasswordAsync(user, request.Password);
 
-        for (var i = 0; i < computeHash.Length; i++)
+        if (!result)
         {
-            if (computeHash[i] != user.PasswordHash[i])
-            {
-                return Unauthorized("Invalid username or password");
-            }
+            return Unauthorized("Invalid username or password");
         }
 
         return new UserResponse
         {
             Username = user.UserName,
             KnownAs = user.KnownAs,
-            Token = tokenService.CreateToken(user),
+            Token = await tokenService.CreateToken(user),
             Gender = user.Gender,
             PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain)?.Url
         };
     }
 
     private async Task<bool> UserExistsAsync(string username) =>
-        await context.Users.AnyAsync(u => u.UserName.ToLower() == username.ToLower());
+        await userManager.Users.AnyAsync(u => u.NormalizedUserName == username.ToUpperInvariant());
 }
