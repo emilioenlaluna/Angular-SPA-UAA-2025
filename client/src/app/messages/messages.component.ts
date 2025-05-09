@@ -19,6 +19,7 @@ export class MessagesComponent implements OnInit {
   container = "Inbox";
   pageNumber = 1;
   pageSize = 5;
+  isOutbox = this.container === "Outbox";
 
   ngOnInit(): void {
     this.loadMessages();
@@ -28,8 +29,22 @@ export class MessagesComponent implements OnInit {
     this.messagesService.getMessages(this.pageNumber, this.pageSize, this.container.toLocaleLowerCase());
   }
 
+  deleteMessage(id: number) {
+    this.messagesService.deleteMessage(id).subscribe({
+      next: _ => {
+        this.messagesService.paginatedResult.update(prev => {
+          if (prev && prev.items) {
+            prev.items.splice(prev.items.findIndex(m => m.id == id), 1);
+            return prev;
+          }
+          return prev;
+        });
+      }
+    });
+  }
+
   getRoute(message: Message) {
-    if (this.container === 'outbox') {
+    if (this.isOutbox) {
       return `/members/${message.recipientUsername}`;
     }
     else {
