@@ -10,7 +10,7 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<
 {
     public DbSet<UserLike> Likes { get; set; }
     public DbSet<Message> Messages { get; set; }
-    public DbSet<MessageGroup> Groups { get; set; }
+    public DbSet<MessageGroup> MessageGroups { get; set; }
     public DbSet<Connection> Connections { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
